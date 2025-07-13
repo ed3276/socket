@@ -19,7 +19,7 @@ public:
 	TCPClient();
 	~TCPClient();
     bool Connect(const std::string ip, int port);
-	bool Read(std::string &msg);
+	bool Read();
 	bool Write(const std::string &msg);
 	bool Read(char *msg, size_t len);
 	bool Write(const char *msg, size_t len);
@@ -28,8 +28,13 @@ public:
 	std::string GetServerIp() const {
 		return serverIp;
 	}
+
 	int GetServerPort() const {
 		return serverPort;
+	}
+
+	std::string GetMsg() const {
+		return recvBuf;
 	}
 private:
 	int fd;
@@ -41,6 +46,7 @@ private:
     struct sockaddr_in localAddr;
 	size_t totalReadByte;
 	size_t totalWriteByte;
+    std::string recvBuf;
 };
 
 TCPClient::TCPClient() :
@@ -85,21 +91,21 @@ bool TCPClient::Connect(const std::string ip, int port) {
 	return res;
 }
 
-bool TCPClient::Read(std::string &msg) {
+bool TCPClient::Read() {
 	bool res = false;
 	ssize_t byteN = 1024, recvN = 0;
 	if (fd < 0) return res;
-	msg.resize(byteN);
-	if ((recvN = recv(fd, &msg[0], msg.size(), 0)) <= 0) {
+	recvBuf.resize(byteN);
+	if ((recvN = recv(fd, &recvBuf[0], recvBuf.size(), 0)) <= 0) {
 		if (recvN < 0) {
 			perror("recv");
 			Close();
 		} else {
-			msg.clear();
+			recvBuf.clear();
 			Close();
 		}
 	} else {
-		msg.resize(recvN);
+		recvBuf.resize(recvN);
 		res = true;
 		totalReadByte += recvN;
 	}
@@ -184,15 +190,16 @@ int main(int argc, char **argv) {
 		std::cout << "send to " << client.GetServerIp() << ":" << client.GetServerPort();
 		std::cout << " [" << sendBuf << ']' << std::endl;
 
-		if (!client.Read(recvBuf)) {
-			if (recvBuf.size() == 0) {
+		if (!client.Read()) {
+			if (client.GetMsg().size() == 0) {
 			    std::cout << "server " << client.GetServerIp() << ":" << client.GetServerPort() << "closed" << std::endl;
 			}
 			exit(0);
+		} else {
+			std::cout << "receive from  " << client.GetServerIp() << ":" << client.GetServerPort();
+			std::cout <<" [" << client.GetMsg() << ']' << std::endl;
+			std::this_thread::sleep_for(std::chrono::seconds(2));
 		}
-		std::cout << "receive from  " << client.GetServerIp() << ":" << client.GetServerPort();
-		std::cout <<" [" << recvBuf << ']' << std::endl;
-		std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
 
     return 0;
