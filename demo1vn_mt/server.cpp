@@ -18,6 +18,7 @@
 #include <thread>
 #include <functional>
 #include <mutex>
+#include "threadpool.hpp"
 
 extern int h_errno;
 
@@ -27,20 +28,20 @@ public:
 	explicit Connection(TCPServer &server) :
 		srv(server),
 		id(-1), fd(-1), port(-1), addr{0}, len(sizeof(addr)) {}
-	~Connection() {
-		if (th.joinable()) {
-			th.join();
-		}
-	}
+
+	~Connection() {  }
+
 	void SetHandle(std::function<void()> ClientCallback) {
 		handle = std::move(ClientCallback);
 	}
+
 	void Process() {
 		auto self = shared_from_this();
 		if (fd >= 0) {
 			handle();
 		}
 	}
+
 	bool Read();
 	bool Write(const std::string &msg);
 	bool Read(char *msg, size_t len);
@@ -62,7 +63,6 @@ public:
 	std::string recvBuf;
 	size_t totalReadByte;
 	size_t totalWriteByte;
-    std::thread th;
 };
 
 bool Connection::Read() {
@@ -178,6 +178,7 @@ private:
 	size_t cid;
 	std::function<void(Connection&)> acceptHandle;
 	std::mutex mtx;
+	ThreadPool pool;
 };
 
 void Connection::Close() {
@@ -203,7 +204,8 @@ TCPServer::TCPServer() :
 	totalWriteByte(0),
 	totalClientNum(0),
 	activeClientNum(0),
-	cid(0)
+	cid(0),
+	pool(6)
 {
 
 }
@@ -243,8 +245,7 @@ bool TCPServer::Start(int port, std::function<void(Connection &conn)> acceptCall
 			std::cout << "connected client[" << GetActiveClientNum();
 			std::cout << "/" << GetTotalClientNum() << "] " << pClient->ip << ":" << pClient->port << std::endl;
             
-			pClient->th = std::move(std::thread([=]() { pClient->Process(); }));
-			//client.Process();
+			pool.enqueue([=]() { pClient->Process(); });
 		} 
 	}
 
@@ -274,18 +275,11 @@ std::shared_ptr<Connection> TCPServer::Accept() {
     return client;
 }
 
-
-
-
-
 void TCPServer::Stop() {
 	if (listenfd >= 0) {
 		for (auto &pClient : clients) {
 			auto &c = *pClient.second;
 			close(c.fd);
-			if (c.th.joinable()) {
-				c.th.join();
-			}
 		}
 		clients.clear();
 		close(listenfd);
