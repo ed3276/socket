@@ -1,5 +1,5 @@
 OUTDIR := build
-CFLAGS := -g -std=c++14 -pthread
+CFLAGS := -g -std=c++11 -pthread
 
 TARGET := $(OUTDIR)/client $(OUTDIR)/server
 all: $(TARGET)
