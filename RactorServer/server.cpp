@@ -13,6 +13,7 @@
 #include <string>
 #include <algorithm>
 #include "InetAddress.hpp"
+#include "Socket.hpp"
 
 extern int h_errno;
 
@@ -21,31 +22,17 @@ int main(int argc, char **argv) {
 		std::cerr << "Usage: ./server 192.168.74.130 8279" << std::endl;
 		exit(0);
 	}
-	int listenfd;
-    listenfd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0);
-	if (listenfd < 0) {
-		perror("socket");
-		exit(0);
-	}
 
-	int optval = 1;
-	setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-	setsockopt(listenfd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
-	setsockopt(listenfd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval));
-	setsockopt(listenfd, TCP_NODELAY, SO_KEEPALIVE, &optval, sizeof(optval));
-
+    Socket servsock(CreateNoBlocking());
     InetAddress servaddr(argv[1], std::stoi(argv[2]));
-	if (bind(listenfd, servaddr.Addr(), sizeof(sockaddr)) < 0) {
-		perror("bind");
-		exit(0);
-	}
+    servsock.SetReuseAddr(true);
+    servsock.SetReusePort(true);
+    servsock.SetTcpNoDelay(true);
+    servsock.SetKeepAlive(true);
+    servsock.Bind(servaddr);
+    servsock.Listen();
 
-	if (listen(listenfd, 128) < 0) {
-		perror("listen");
-		exit(0);
-	}
-
-	std::cout << "listen on socket fd: " << listenfd << std::endl;
+    printf("listen on socket fd: %d\n", servsock.Fd());
 
 	unsigned long long totalClientNum = 0, activeClientNum = 0;
 
@@ -55,12 +42,11 @@ int main(int argc, char **argv) {
 	struct epoll_event ev;
 	const int maxfd = 10;
 	struct epoll_event evs[maxfd];
+	ev.data.fd = servsock.Fd();
 	ev.events = EPOLLIN;
-	//ev.events = EPOLLIN|EPOLLET;
-	ev.data.fd = listenfd;
 	
 	epfd = epoll_create(1);
-	if (epoll_ctl(epfd, EPOLL_CTL_ADD, listenfd, &ev) < 0) {
+	if (epoll_ctl(epfd, EPOLL_CTL_ADD, servsock.Fd(), &ev) < 0) {
 		perror("epoll_ctl");
 		exit(1);
 	}
@@ -79,24 +65,18 @@ int main(int argc, char **argv) {
 					printf("client fd(%d) disconnected\n", tmp.data.fd);
 					close(tmp.data.fd);
 				} else if (evs[i].events & (EPOLLIN | EPOLLPRI)) {
-					if (tmp.data.fd == listenfd) {
-						int clientfd;
-						struct sockaddr_in peeraddr;
-						socklen_t len = sizeof(peeraddr);
-						clientfd = accept4(tmp.data.fd, (struct sockaddr*)&peeraddr, &len, SOCK_NONBLOCK);
-                        if (clientfd < 0) {
-							perror("accept()");
-						} else {
-                            InetAddress clientaddr(peeraddr);
-							ev.data.fd = clientfd;
-							ev.events = EPOLLIN|EPOLLET;
-							if (epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &ev) < 0) {
-								perror("epoll_ctl");
-								continue;
-							}
-							++totalClientNum, ++activeClientNum;
-							printf("accept client[%llu/%llu] %s:%d ok\n", activeClientNum, totalClientNum, clientaddr.Ip(), clientaddr.Port());
+					if (tmp.data.fd == servsock.Fd()) {
+
+						InetAddress clientaddr;
+						Socket *pClientsock = new Socket(servsock.Accept(clientaddr));
+						ev.data.fd = pClientsock->Fd();
+						ev.events = EPOLLIN|EPOLLET;
+						if (epoll_ctl(epfd, EPOLL_CTL_ADD, pClientsock->Fd(), &ev) < 0) {
+							perror("epoll_ctl");
+							continue;
 						}
+						++totalClientNum, ++activeClientNum;
+						printf("accept client fd(%d) [%llu/%llu] %s:%d ok\n", pClientsock->Fd(), activeClientNum, totalClientNum, clientaddr.Ip(), clientaddr.Port());
 					} else {
 						std::string sendBuf, recvBuf;
 						ssize_t byteN = 1024, recvN = 0;
@@ -135,7 +115,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	close(listenfd);
+	close(servsock.Fd());
 	std::cout << "colsed" << std::endl;
 	close(epfd);
 	exit(0);
