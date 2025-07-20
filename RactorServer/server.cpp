@@ -3,7 +3,6 @@
 #include <unistd.h>       // close()
 #include <sys/types.h>
 #include <sys/socket.h>   // socket()
-#include <netinet/in.h>
 #include <netinet/ip.h>   // struct sockaddr_in
 #include <netdb.h>
 #include <arpa/inet.h>    // htons()
@@ -13,12 +12,13 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include "InetAddress.hpp"
 
 extern int h_errno;
 
 int main(int argc, char **argv) {
-	if (argc < 2) {
-		std::cerr << "Usage: ./server 8279" << std::endl;
+	if (argc < 3) {
+		std::cerr << "Usage: ./server 192.168.74.130 8279" << std::endl;
 		exit(0);
 	}
 	int listenfd;
@@ -34,11 +34,8 @@ int main(int argc, char **argv) {
 	setsockopt(listenfd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval));
 	setsockopt(listenfd, TCP_NODELAY, SO_KEEPALIVE, &optval, sizeof(optval));
 
-	struct sockaddr_in serverAddr;
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(std::stoi(argv[1]));
-    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	if (bind(listenfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
+    InetAddress servaddr(argv[1], std::stoi(argv[2]));
+	if (bind(listenfd, servaddr.Addr(), sizeof(sockaddr)) < 0) {
 		perror("bind");
 		exit(0);
 	}
@@ -51,9 +48,6 @@ int main(int argc, char **argv) {
 	std::cout << "listen on socket fd: " << listenfd << std::endl;
 
 	unsigned long long totalClientNum = 0, activeClientNum = 0;
-	int clientfd;
-	struct sockaddr_in clientAddr;
-	socklen_t len = sizeof(clientAddr);
 
 	int timeout = 10000;
 	int retval = 0;
@@ -82,13 +76,18 @@ int main(int argc, char **argv) {
 			for (int i = 0; i < retval; ++i) {
 				struct epoll_event &tmp = evs[i];
 				if (evs[i].events & EPOLLRDHUP) {
-					printf("client fd(%d) %s:%d disconnected\n", tmp.data.fd, inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+					printf("client fd(%d) disconnected\n", tmp.data.fd);
 					close(tmp.data.fd);
 				} else if (evs[i].events & (EPOLLIN | EPOLLPRI)) {
 					if (tmp.data.fd == listenfd) {
-						if ((clientfd = accept4(tmp.data.fd, (struct sockaddr*)&clientAddr, &len, SOCK_NONBLOCK)) < 0) {
+						int clientfd;
+						struct sockaddr_in peeraddr;
+						socklen_t len = sizeof(peeraddr);
+						clientfd = accept4(tmp.data.fd, (struct sockaddr*)&peeraddr, &len, SOCK_NONBLOCK);
+                        if (clientfd < 0) {
 							perror("accept()");
 						} else {
+                            InetAddress clientaddr(peeraddr);
 							ev.data.fd = clientfd;
 							ev.events = EPOLLIN|EPOLLET;
 							if (epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &ev) < 0) {
@@ -96,8 +95,7 @@ int main(int argc, char **argv) {
 								continue;
 							}
 							++totalClientNum, ++activeClientNum;
-							printf("accept client[%llu/%llu] %s:%d ok\n", activeClientNum, totalClientNum,
-									inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+							printf("accept client[%llu/%llu] %s:%d ok\n", activeClientNum, totalClientNum, clientaddr.Ip(), clientaddr.Port());
 						}
 					} else {
 						std::string sendBuf, recvBuf;
@@ -114,7 +112,7 @@ int main(int argc, char **argv) {
 							} else if (recvN < 0 && errno == EINTR) {
 								continue;
 							} else if (recvN == 0) {
-								printf("client fd(%d) %s:%d disconnected\n", tmp.data.fd, inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+								printf("client fd(%d) disconnected\n", tmp.data.fd);
 								close(tmp.data.fd);
 								--activeClientNum;
 								break;
@@ -129,7 +127,7 @@ int main(int argc, char **argv) {
 				} else if (evs[i].events & EPOLLOUT) {
 
 				} else {
-					printf("client fd(%d) %s:%d error\n", tmp.data.fd, inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+					printf("client fd(%d) error\n", tmp.data.fd);
 					close(tmp.data.fd);
 					--activeClientNum;
 				}

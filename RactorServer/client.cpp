@@ -27,7 +27,7 @@ int setnonblocking(int fd) {
 
 int main(int argc, char **argv) {
 	if (argc < 3) {
-		std::cerr << "Usage: ./client 192.168.74.142 8279" << std::endl;
+		std::cerr << "Usage: ./client 192.168.74.130 8279" << std::endl;
 		exit(0);
 	}
 	int sockfd;
