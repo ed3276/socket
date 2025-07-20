@@ -31,4 +31,5 @@ $(BUILD_DIR)/%.o: %.cpp
 
 .PHONY: clean all
 clean:
-	rm -rf $(BUILD_DIR
+	rm -rf $(BUILD_DIR)
+
