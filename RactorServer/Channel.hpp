@@ -1,0 +1,25 @@
+#pragma once
+#include "Epoll.hpp"
+
+class Epoll;
+
+class Channel {
+ public:
+    Channel(Epoll *ep, int fd);
+    ~Channel();
+  
+    int Fd() const;
+    void UseET();
+    void EnableReading();
+    void SetInEpoll();
+    void SetReEvents(uint32_t ev);
+    bool InPoll() const;
+    uint32_t Events() const;
+    uint32_t Revents() const;
+ private:
+    Epoll *ep_ = nullptr; // Channel对应的红黑树, Channel与Epoll是多对一的关系, 一个Channel只对应一个Epoll.
+    int fd_ = -1; // Channel 拥有fd, Channel和fd是一对一的关系.
+    bool inEpoll_ = false; // Channel是否已添加到epoll树上, 如果未添加, 调用epoll_ctl()的时候EPOLL_CTL_ADD, 否则调用EPOLL_CTL_MOD
+    uint32_t events_ = 0;  // fd需要监视的事件, listenfd和clientfd需要监视EPOLLIN, clientfd还可能需要监视EPOLLOUT
+    uint32_t revents_ = 0;  // fd已发生的事件
+};

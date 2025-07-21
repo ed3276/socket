@@ -7,14 +7,18 @@
 #include <unistd.h>       // close()
 #include <sys/epoll.h>
 #include <vector>
+#include "Channel.hpp"
+
+class Channel;
 
 class Epoll {
  public:
     Epoll();
     ~Epoll();
 
-    void AddFd(int fd, uint32_t op);
-    std::vector<epoll_event> Loop(int timeout = -1);
+    //void AddFd(int fd, uint32_t op);
+    void UpdateChannel(Channel *ch);
+    std::vector<Channel*> Loop(int timeout = -1);
 
  private:
     static const int MaxEvents = 100;

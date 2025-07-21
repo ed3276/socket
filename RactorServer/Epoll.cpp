@@ -14,19 +14,27 @@ Epoll::~Epoll() {
     }
 }
 
-void Epoll::AddFd(int fd, uint32_t op) {
+void Epoll::UpdateChannel(Channel *ch) {
     epoll_event ev;
-	ev.data.fd = fd;
-	ev.events = op;
+	ev.data.ptr = ch;
+	ev.events = ch->Events();
 
-	if (epoll_ctl(epollfd_, EPOLL_CTL_ADD, fd, &ev) < 0) {
-		perror("epoll_ctl");
-		exit(1);
-	}
+    if (ch->InPoll()) {
+	    if (epoll_ctl(epollfd_, EPOLL_CTL_MOD, ch->Fd(), &ev) < 0) {
+		    perror("epoll_ctl");
+		    exit(1);
+        }
+	} else {
+	    if (epoll_ctl(epollfd_, EPOLL_CTL_ADD, ch->Fd(), &ev) < 0) {
+		    perror("epoll_ctl");
+		    exit(1);
+        }
+    }
+    ch->SetInEpoll();
 }
 
-std::vector<epoll_event> Epoll::Loop(int timeout) {
-    std::vector<epoll_event> evs;
+std::vector<Channel*> Epoll::Loop(int timeout) {
+    std::vector<Channel*> channels;
     bzero(events_, sizeof(events_));
     int retval;
 	retval = epoll_wait(epollfd_, &events_[0], MaxEvents, timeout);
@@ -37,8 +45,10 @@ std::vector<epoll_event> Epoll::Loop(int timeout) {
 	    printf("epoll timeout...\n");
     } else {
 		for (int i = 0; i < retval; ++i) {
-			evs.push_back(events_[i]);
+            Channel *ch = reinterpret_cast<Channel*>(events_[i].data.ptr);
+            ch->SetReEvents(events_[i].events);
+			channels.push_back(ch);
         }
     }
-    return evs;
+    return channels;
 }
