@@ -14,6 +14,7 @@
 #include <algorithm>
 #include "InetAddress.hpp"
 #include "Socket.hpp"
+#include "Epoll.hpp"
 
 extern int h_errno;
 
@@ -36,87 +37,61 @@ int main(int argc, char **argv) {
 
 	unsigned long long totalClientNum = 0, activeClientNum = 0;
 
-	int timeout = 10000;
-	int retval = 0;
-	int epfd = -1;
-	struct epoll_event ev;
-	const int maxfd = 10;
-	struct epoll_event evs[maxfd];
-	ev.data.fd = servsock.Fd();
-	ev.events = EPOLLIN;
-	
-	epfd = epoll_create(1);
-	if (epoll_ctl(epfd, EPOLL_CTL_ADD, servsock.Fd(), &ev) < 0) {
-		perror("epoll_ctl");
-		exit(1);
-	}
+    Epoll ep;
+    ep.AddFd(servsock.Fd(), EPOLLIN);
+    std::vector<epoll_event> evs;
 	while(true) {
-		retval = epoll_wait(epfd, &evs[0], maxfd, timeout);
-		if (retval < 0) {
-			perror("poll()");
-			exit(1);
-		} else if (retval == 0) {
-			std::cout << "epoll timeout..." << std::endl;
-			continue;
-		} else {
-			for (int i = 0; i < retval; ++i) {
-				struct epoll_event &tmp = evs[i];
-				if (evs[i].events & EPOLLRDHUP) {
-					printf("client fd(%d) disconnected\n", tmp.data.fd);
-					close(tmp.data.fd);
-				} else if (evs[i].events & (EPOLLIN | EPOLLPRI)) {
-					if (tmp.data.fd == servsock.Fd()) {
+        evs = ep.Loop();
+		for (auto &ev : evs) {
+			if (ev.events & EPOLLRDHUP) {
+				printf("client fd(%d) disconnected\n", ev.data.fd);
+				close(ev.data.fd);
+			} else if (ev.events & (EPOLLIN | EPOLLPRI)) {
+				if (ev.data.fd == servsock.Fd()) {
 
-						InetAddress clientaddr;
-						Socket *pClientsock = new Socket(servsock.Accept(clientaddr));
-						ev.data.fd = pClientsock->Fd();
-						ev.events = EPOLLIN|EPOLLET;
-						if (epoll_ctl(epfd, EPOLL_CTL_ADD, pClientsock->Fd(), &ev) < 0) {
-							perror("epoll_ctl");
+					InetAddress clientaddr;
+					Socket *pClientsock = new Socket(servsock.Accept(clientaddr));
+					++totalClientNum, ++activeClientNum;
+					printf("accept client fd(%d) [%llu/%llu] %s:%d ok\n", pClientsock->Fd(), activeClientNum, totalClientNum, clientaddr.Ip(), clientaddr.Port());
+
+                    ep.AddFd(pClientsock->Fd(), EPOLLIN|EPOLLET);
+				} else {
+					std::string sendBuf, recvBuf;
+					ssize_t byteN = 1024, recvN = 0;
+					while (true) {
+						recvBuf.resize(byteN);
+						recvN = recv(ev.data.fd, &recvBuf[0], recvBuf.size(), 0);
+						if (recvN > 0) {
+							printf("receive from fd(%d) [%s]\n", ev.data.fd, recvBuf.c_str());
+							sendBuf = std::string(recvBuf, 0, recvN);
+							send(ev.data.fd, sendBuf.data(), sendBuf.size(), 0);
+						} else if (recvN < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+							break;
+						} else if (recvN < 0 && errno == EINTR) {
 							continue;
-						}
-						++totalClientNum, ++activeClientNum;
-						printf("accept client fd(%d) [%llu/%llu] %s:%d ok\n", pClientsock->Fd(), activeClientNum, totalClientNum, clientaddr.Ip(), clientaddr.Port());
-					} else {
-						std::string sendBuf, recvBuf;
-						ssize_t byteN = 1024, recvN = 0;
-						while (true) {
-							recvBuf.resize(byteN);
-							recvN = recv(tmp.data.fd, &recvBuf[0], recvBuf.size(), 0);
-							if (recvN > 0) {
-								printf("receive from fd(%d) [%s]\n", tmp.data.fd, recvBuf.c_str());
-								sendBuf = std::string(recvBuf, 0, recvN);
-								send(tmp.data.fd, sendBuf.data(), sendBuf.size(), 0);
-							} else if (recvN < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-								break;
-							} else if (recvN < 0 && errno == EINTR) {
-								continue;
-							} else if (recvN == 0) {
-								printf("client fd(%d) disconnected\n", tmp.data.fd);
-								close(tmp.data.fd);
-								--activeClientNum;
-								break;
-							} else {
-								perror("recv");
-								close(tmp.data.fd);
-								--activeClientNum;
-								break;
-							}
+						} else if (recvN == 0) {
+							printf("client fd(%d) disconnected\n", ev.data.fd);
+							close(ev.data.fd);
+							--activeClientNum;
+							break;
+						} else {
+							perror("recv");
+							close(ev.data.fd);
+							--activeClientNum;
+							break;
 						}
 					}
-				} else if (evs[i].events & EPOLLOUT) {
-
-				} else {
-					printf("client fd(%d) error\n", tmp.data.fd);
-					close(tmp.data.fd);
-					--activeClientNum;
 				}
+			} else if (ev.events & EPOLLOUT) {
+
+			} else {
+				printf("client fd(%d) error\n", ev.data.fd);
+				close(ev.data.fd);
+				--activeClientNum;
 			}
 		}
 	}
 
-	close(servsock.Fd());
 	std::cout << "colsed" << std::endl;
-	close(epfd);
 	exit(0);
 }
