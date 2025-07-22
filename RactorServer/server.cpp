@@ -14,7 +14,7 @@
 #include <algorithm>
 #include "InetAddress.hpp"
 #include "Socket.hpp"
-#include "Epoll.hpp"
+#include "EventLoop.hpp"
 
 extern int h_errno;
 
@@ -35,17 +35,12 @@ int main(int argc, char **argv) {
 
     printf("listen on socket fd: %d\n", servsock.Fd());
 
-    Epoll ep;
-    Channel *servchannel = new Channel(&ep, servsock.Fd(), true);
+    EventLoop loop;
+    Channel *servchannel = new Channel(loop.Ep(), servsock.Fd());
+    servchannel->SetReadCallback(std::bind(&Channel::NewConnection, servchannel, &servsock));
     servchannel->EnableReading();
 
-	while(true) {
-        std::vector<Channel*> channels = ep.Loop();
-		for (auto &ch : channels) {
-            ch->HandleEvent(&servsock);
-		}
-	}
+    loop.Run();
 
-	std::cout << "colsed" << std::endl;
 	exit(0);
 }

@@ -16,7 +16,6 @@ class Epoll {
     Epoll();
     ~Epoll();
 
-    //void AddFd(int fd, uint32_t op);
     void UpdateChannel(Channel *ch);
     std::vector<Channel*> Loop(int timeout = -1);
 
