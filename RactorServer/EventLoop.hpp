@@ -8,7 +8,7 @@ class EventLoop {
     ~EventLoop();
 
     void Run();
-    Epoll *Ep() const { return ep_; }
+    void UpdateChannel(Channel *ch);
  private:
     Epoll *ep_;   //每个事件循环只有一个Epoll
 };

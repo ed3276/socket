@@ -2,13 +2,13 @@
 #include <functional>
 #include "InetAddress.hpp"
 #include "Socket.hpp"
-#include "Epoll.hpp"
+#include "EventLoop.hpp"
 
-class Epoll;
+class EventLoop;
 
 class Channel {
  public:
-    Channel(Epoll *ep, int fd);
+    Channel(EventLoop *loop, int fd);
     ~Channel();
   
     int Fd() const;
@@ -25,7 +25,7 @@ class Channel {
     void OnMessage(); 
     void SetReadCallback(std::function<void()>);
  private:
-    Epoll *ep_ = nullptr; // Channel对应的红黑树, Channel与Epoll是多对一的关系, 一个Channel只对应一个Epoll.
+    EventLoop *loop_ = nullptr; // Channel对应的红黑树, Channel与EventLoop是多对一的关系, 一个Channel只对应一个EventLoop.
     int fd_ = -1; // Channel 拥有fd, Channel和fd是一对一的关系.
     bool inEpoll_ = false; // Channel是否已添加到epoll树上, 如果未添加, 调用epoll_ctl()的时候EPOLL_CTL_ADD, 否则调用EPOLL_CTL_MOD
     uint32_t events_ = 0;  // fd需要监视的事件, listenfd和clientfd需要监视EPOLLIN, clientfd还可能需要监视EPOLLOUT

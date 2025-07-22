@@ -17,3 +17,6 @@ void EventLoop::Run() {
 	}
 }
 
+void EventLoop::UpdateChannel(Channel *ch) {
+    ep_->UpdateChannel(ch);
+}

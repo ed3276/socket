@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
     printf("listen on socket fd: %d\n", servsock.Fd());
 
     EventLoop loop;
-    Channel *servchannel = new Channel(loop.Ep(), servsock.Fd());
+    Channel *servchannel = new Channel(&loop, servsock.Fd());
     servchannel->SetReadCallback(std::bind(&Channel::NewConnection, servchannel, &servsock));
     servchannel->EnableReading();
 
