@@ -2,6 +2,9 @@
 
 #include "Epoll.hpp"
 
+class Channel;
+class Epoll;
+
 class EventLoop {
  public:
     EventLoop();

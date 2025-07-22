@@ -1,0 +1,16 @@
+#pragma once
+#include <functional>
+#include "Socket.hpp"
+#include "InetAddress.hpp"
+#include "Channel.hpp"
+#include "EventLoop.hpp"
+
+class Acceptor {
+ public:
+    Acceptor(EventLoop *loop, const std::string ip, const uint16_t port);
+    ~Acceptor();
+ private:
+    EventLoop *loop_; //Acceptor对应的事件循环, 在构造函数中传入
+    Socket *servSock_;
+    Channel *acceptChannel_;
+};
