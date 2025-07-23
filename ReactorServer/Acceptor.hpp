@@ -11,8 +11,10 @@ class Acceptor {
     ~Acceptor();
 
     void NewConnection();
+    void SetNewConnectionCb(std::function<void(Socket*)>);
  private:
     EventLoop *loop_; //Acceptor对应的事件循环, 在构造函数中传入
     Socket *servSock_;
     Channel *acceptChannel_;
+    std::function<void(Socket*)> newConnectionCb_;
 };

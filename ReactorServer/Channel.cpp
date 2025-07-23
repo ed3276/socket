@@ -43,15 +43,13 @@ uint32_t Channel::Revents() const {
 
 void Channel::HandleEvent() {
 	if (revents_ & EPOLLRDHUP) {
-		printf("client fd(%d) disconnected\n", fd_);
-		close(fd_);
+        closeCallback_();
 	} else if (revents_ & (EPOLLIN | EPOLLPRI)) {
         readCallback_();
 	} else if (revents_ & EPOLLOUT) {
 
 	} else {
-		printf("client fd(%d) error\n", fd_);
-		close(fd_);
+        errorCallback_();
 	}
 }
 
@@ -70,18 +68,24 @@ void Channel::OnMessage() {
 		} else if (recvN < 0 && errno == EINTR) {
 			continue;
 		} else if (recvN == 0) {
-			printf("client fd(%d) disconnected\n", fd_);
-			close(fd_);
+            closeCallback_();
 			break;
 		} else {
 			perror("recv");
-			close(fd_);
+            errorCallback_();
 			break;
 		}
 	}
 }
 
-
 void Channel::SetReadCallback(std::function<void()> fn) {
     readCallback_ = fn;
+}
+
+void Channel::SetCloseCallback(std::function<void()> fn) {
+    closeCallback_ = fn;
+}
+
+void Channel::SetErrorCallback(std::function<void()> fn) {
+    errorCallback_ = fn;
 }

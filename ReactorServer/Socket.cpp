@@ -46,6 +46,8 @@ void Socket::Bind(const InetAddress &servaddr) {
 		perror("bind");
 		exit(-1);
 	}
+    ip_   = std::string(servaddr.Ip());
+    port_ = servaddr.Port();
 }
 
 void Socket::Listen(int num) {
@@ -63,4 +65,21 @@ int Socket::Accept(InetAddress &clientaddr) {
     clientaddr = InetAddress(peeraddr);
 
     return clientfd;
+}
+
+std::string Socket::Ip() const {
+    return ip_;
+}
+
+uint16_t Socket::Port() const {
+    return port_;
+}
+
+
+void Socket::SetIp(const std::string &ip) {
+    ip_ = ip;
+}
+
+void Socket::SetPort(const uint16_t port) {
+    port_ = port;
 }
