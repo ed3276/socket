@@ -3,8 +3,10 @@
 #include "InetAddress.hpp"
 #include "Socket.hpp"
 #include "EventLoop.hpp"
+#include "Connection.hpp"
 
 class EventLoop;
+class Connection;
 
 class Channel {
  public:

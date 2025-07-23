@@ -59,11 +59,8 @@ void Channel::HandleEvent() {
 void Channel::NewConnection(Socket *servsock) {
 	InetAddress clientaddr;
 	Socket *pClientsock = new Socket(servsock->Accept(clientaddr));
-	Channel *clientchannel = new Channel(loop_, pClientsock->Fd());
-    clientchannel->SetReadCallback(std::bind(&Channel::OnMessage, clientchannel));
+    Connection *conn = new Connection(loop_, pClientsock);
 	printf("accept client fd(%d) %s:%d ok\n", pClientsock->Fd(), clientaddr.Ip(), clientaddr.Port());
-	clientchannel->UseET();
-	clientchannel->EnableReading();
 }
 
 void Channel::OnMessage() {
