@@ -55,14 +55,6 @@ void Channel::HandleEvent() {
 	}
 }
 
-
-void Channel::NewConnection(Socket *servsock) {
-	InetAddress clientaddr;
-	Socket *pClientsock = new Socket(servsock->Accept(clientaddr));
-    Connection *conn = new Connection(loop_, pClientsock);
-	printf("accept client fd(%d) %s:%d ok\n", pClientsock->Fd(), clientaddr.Ip(), clientaddr.Port());
-}
-
 void Channel::OnMessage() {
 	std::string sendBuf, recvBuf;
 	ssize_t byteN = 1024, recvN = 0;

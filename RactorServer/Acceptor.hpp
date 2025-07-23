@@ -9,6 +9,8 @@ class Acceptor {
  public:
     Acceptor(EventLoop *loop, const std::string ip, const uint16_t port);
     ~Acceptor();
+
+    void NewConnection();
  private:
     EventLoop *loop_; //Acceptor对应的事件循环, 在构造函数中传入
     Socket *servSock_;

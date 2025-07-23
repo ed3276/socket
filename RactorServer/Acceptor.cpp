@@ -1,4 +1,5 @@
 #include "Acceptor.hpp"
+#include "Connection.hpp"
 
 Acceptor::Acceptor(EventLoop *loop, const std::string ip, const uint16_t port) :
     loop_(loop) {
@@ -14,7 +15,7 @@ Acceptor::Acceptor(EventLoop *loop, const std::string ip, const uint16_t port) :
     printf("listen on socket fd: %d\n", servSock_->Fd());
 
     Channel *acceptChannel_ = new Channel(loop_, servSock_->Fd());
-    acceptChannel_->SetReadCallback(std::bind(&Channel::NewConnection, acceptChannel_, servSock_));
+    acceptChannel_->SetReadCallback(std::bind(&Acceptor::NewConnection, this));
     acceptChannel_->EnableReading();
 
 }
@@ -23,3 +24,11 @@ Acceptor::~Acceptor() {
     delete servSock_;
     delete acceptChannel_;
 }
+
+void Acceptor::NewConnection() {
+	InetAddress clientaddr;
+	Socket *pClientsock = new Socket(servSock_->Accept(clientaddr));
+    Connection *conn = new Connection(loop_, pClientsock);
+	printf("accept client fd(%d) %s:%d ok\n", pClientsock->Fd(), clientaddr.Ip(), clientaddr.Port());
+}
+
