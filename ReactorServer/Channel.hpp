@@ -23,7 +23,6 @@ class Channel {
     uint32_t Revents() const;
     void HandleEvent(); // 事件处理函数, epoll_wait()返回的时候, 执行它
 
-    void OnMessage(); 
     void SetReadCallback(std::function<void()>);
     void SetCloseCallback(std::function<void()>);
     void SetErrorCallback(std::function<void()>);

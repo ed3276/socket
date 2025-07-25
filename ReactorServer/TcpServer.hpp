@@ -13,6 +13,7 @@ class TcpServer {
 
     void Start();
     void NewConnection(Socket *clientSock);
+	void OnMessage(Connection *conn, std::string message);
     void CloseConnection(Connection *conn);
     void ErrorConnection(Connection *conn);
  private:

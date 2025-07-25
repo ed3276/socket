@@ -1,0 +1,28 @@
+#include "Buffer.hpp"
+
+Buffer::Buffer() {  }
+Buffer::~Buffer() {  }
+
+void Buffer::Append(const char *data, size_t size) {
+	buf_.append(data, size);
+}
+
+size_t Buffer::Size() const {
+	return buf_.size();
+}
+
+const char *Buffer::Data() const {
+	return buf_.data();
+}
+
+void Buffer::Clear() {
+	buf_.clear();
+}
+
+void Buffer::Empty() {
+	buf_.empty();
+}
+
+void Buffer::Erase(size_t pos, size_t len) {
+    buf_.erase(pos, len);
+}

@@ -53,31 +53,6 @@ void Channel::HandleEvent() {
 	}
 }
 
-void Channel::OnMessage() {
-	std::string sendBuf, recvBuf;
-	ssize_t byteN = 1024, recvN = 0;
-	while (true) {
-		recvBuf.resize(byteN);
-		recvN = recv(fd_, &recvBuf[0], recvBuf.size(), 0);
-		if (recvN > 0) {
-			printf("receive from fd(%d) [%s]\n", fd_, recvBuf.c_str());
-			sendBuf = std::string(recvBuf, 0, recvN);
-			send(fd_, sendBuf.data(), sendBuf.size(), 0);
-		} else if (recvN < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-			break;
-		} else if (recvN < 0 && errno == EINTR) {
-			continue;
-		} else if (recvN == 0) {
-            closeCallback_();
-			break;
-		} else {
-			perror("recv");
-            errorCallback_();
-			break;
-		}
-	}
-}
-
 void Channel::SetReadCallback(std::function<void()> fn) {
     readCallback_ = fn;
 }

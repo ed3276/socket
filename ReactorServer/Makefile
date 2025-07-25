@@ -7,7 +7,7 @@ BUILD_DIR := build
 
 SERVER_INC := 
 SERVER_SRC := server.cpp InetAddress.cpp Socket.cpp Epoll.cpp Channel.cpp EventLoop.cpp TcpServer.cpp Acceptor.cpp
-SERVER_SRC += Connection.cpp
+SERVER_SRC += Connection.cpp Buffer.cpp
 SERVER_OBJ := $(addprefix $(BUILD_DIR)/, $(SERVER_SRC:.cpp=.o))
 
 CLIENT_INC := 
