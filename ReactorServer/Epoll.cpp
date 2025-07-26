@@ -46,8 +46,8 @@ std::vector<Channel*> Epoll::Loop(int timeout) {
     } else {
 		for (int i = 0; i < retval; ++i) {
             Channel *ch = reinterpret_cast<Channel*>(events_[i].data.ptr);
-            ch->SetReEvents(events_[i].events);
-			channels.push_back(ch);
+            ch->SetRevents(events_[i].events);
+            channels.push_back(ch);
         }
     }
     return channels;

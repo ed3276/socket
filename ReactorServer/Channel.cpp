@@ -21,11 +21,26 @@ void Channel::EnableReading() {
     loop_->UpdateChannel(this);
 }
 
+void Channel::DisableReading() {
+    events_ &= ~EPOLLIN;
+    loop_->UpdateChannel(this);
+}
+
+void Channel::EnableWriting() {
+    events_ |= EPOLLOUT;
+    loop_->UpdateChannel(this);
+}
+
+void Channel::DisableWriting() {
+    events_ &= ~EPOLLOUT;
+    loop_->UpdateChannel(this);
+}
+
 void Channel::SetInEpoll() {
     inEpoll_ = true;
 }
 
-void Channel::SetReEvents(uint32_t ev) {
+void Channel::SetRevents(uint32_t ev) {
     revents_ = ev;
 }
 
@@ -47,7 +62,7 @@ void Channel::HandleEvent() {
 	} else if (revents_ & (EPOLLIN | EPOLLPRI)) {
         readCallback_();
 	} else if (revents_ & EPOLLOUT) {
-
+        writeCallback_();
 	} else {
         errorCallback_();
 	}
@@ -55,6 +70,10 @@ void Channel::HandleEvent() {
 
 void Channel::SetReadCallback(std::function<void()> fn) {
     readCallback_ = fn;
+}
+
+void Channel::SetWriteCallback(std::function<void()> fn) {
+    writeCallback_ = fn;
 }
 
 void Channel::SetCloseCallback(std::function<void()> fn) {

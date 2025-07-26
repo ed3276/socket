@@ -5,6 +5,7 @@ Connection::Connection(EventLoop *loop, Socket *clientSock) :
     loop_(loop), clientSock_(clientSock) {
 	clientChannel_ = new Channel(loop, clientSock_->Fd());
     clientChannel_->SetReadCallback(std::bind(&Connection::OnMessage, this));
+    clientChannel_->SetWriteCallback(std::bind(&Connection::WriteCallback, this));
     clientChannel_->SetCloseCallback(std::bind(&Connection::CloseCallback, this));
     clientChannel_->SetErrorCallback(std::bind(&Connection::ErrorCallback, this));
 	clientChannel_->UseET();
@@ -49,20 +50,35 @@ void Connection::OnMessage() {
 				inputBuffer_.Erase(0, len+sizeof(len));
                 printf("recv from fd(%d) [%s]\n", Fd(), message.c_str());
 
-				message = std::string("reply:") + message;
                 onMessageCallback_(this, message);
             }
-		} else if (recvN < 0 && errno == EINTR) {
-			continue;
-		} else if (recvN == 0) {
+            break;
+        } else if (recvN < 0 && errno == EINTR) {
+            continue;
+        } else if (recvN == 0) {
             CloseCallback();
-			break;
-		} else {
-			perror("recv");
+            break;
+        } else {
+            perror("recv");
             ErrorCallback();
-			break;
-		}
-	}
+            break;
+        }
+    }
+}
+
+void Connection::WriteCallback() {
+    int write = send(Fd(), outputBuffer_.Data(), outputBuffer_.Size(), 0);
+	if (write > 0) {
+        outputBuffer_.Erase(0, write);
+    }
+	if (outputBuffer_.Size()) {
+        clientChannel_->DisableWriting();
+    }
+}
+
+void Connection::Send(const char *data, size_t size) {
+    outputBuffer_.Append(data, size);	
+	clientChannel_->EnableWriting();
 }
 
 void Connection::CloseCallback() {

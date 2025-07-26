@@ -33,7 +33,7 @@ void Socket::SetReusePort(bool on) {
 
 void Socket::SetTcpNoDelay(bool on) {
     int optval = on;
-	setsockopt(fd_, TCP_NODELAY, TCP_NODELAY, &optval, sizeof(optval));
+	setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval));
 }
 
 void Socket::SetKeepAlive(bool on) {

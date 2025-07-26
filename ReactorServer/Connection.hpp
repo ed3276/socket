@@ -21,6 +21,8 @@ class Connection {
     uint16_t Port() const;
 
     void OnMessage();
+    void Send(const char *data, size_t size);
+    void WriteCallback();
     void CloseCallback();
     void ErrorCallback();
     void SetCloseCallback(std::function<void(Connection*)>);

@@ -33,7 +33,8 @@ void TcpServer::OnMessage(Connection *conn, std::string message) {
 	len = message.size();
 	tmpBuf = std::string((char*)&len, sizeof(len));
 	tmpBuf.append(message);
-	send(conn->Fd(), tmpBuf.data(), tmpBuf.size(), 0);
+	//send(conn->Fd(), tmpBuf.data(), tmpBuf.size(), 0);
+	conn->Send(tmpBuf.data(), tmpBuf.size());
 }
 
 void TcpServer::CloseConnection(Connection *conn) {

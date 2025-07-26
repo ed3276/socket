@@ -19,8 +19,8 @@ void Buffer::Clear() {
 	buf_.clear();
 }
 
-void Buffer::Empty() {
-	buf_.empty();
+bool Buffer::Empty() const {
+	return buf_.empty();
 }
 
 void Buffer::Erase(size_t pos, size_t len) {
