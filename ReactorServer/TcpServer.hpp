@@ -22,7 +22,7 @@ class TcpServer {
 	void SetNewConnectionCb(std::function<void(Connection*)>);
 	void SetCloseConnectionCb(std::function<void(Connection*)>);
 	void SetErrorConnectionCb(std::function<void(Connection*)>);
-	void SetOnMessageCb(std::function<void(Connection*, std::string)>);
+	void SetOnMessageCb(std::function<void(Connection*, std::string&)>);
 	void SetSendCompleteCb(std::function<void(Connection*)>);
 	void SetTimeOutCb(std::function<void(EventLoop*)>);
  private:
@@ -32,7 +32,7 @@ class TcpServer {
 	std::function<void(Connection*)> newConnectionCb_;
 	std::function<void(Connection*)> closeConnectionCb_;
 	std::function<void(Connection*)> errorConnectionCb_;
-	std::function<void(Connection*, std::string)> onMessageCb_;
+	std::function<void(Connection*, std::string&)> onMessageCb_;
 	std::function<void(Connection*)> sendCompleteCb_;
 	std::function<void(EventLoop*)> timeoutCb_;
 };

@@ -7,6 +7,12 @@ void Buffer::Append(const char *data, size_t size) {
 	buf_.append(data, size);
 }
 
+void Buffer::AppendWithHead(const char *data, size_t size) {
+	uint32_t len = size;
+	buf_.append((char*)&len, sizeof(len));
+	buf_.append(data, size);
+}
+
 size_t Buffer::Size() const {
 	return buf_.size();
 }

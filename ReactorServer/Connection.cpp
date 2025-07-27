@@ -36,7 +36,7 @@ void Connection::OnMessage() {
 	ssize_t recvN = 0;
 	std::string buffer(byteN, 0);
 	std::string message;
-    int len;
+    uint32_t len;
 	while (true) {
 		recvN = recv(Fd(), &buffer[0], buffer.size(), 0);
 		if (recvN > 0) {
@@ -78,7 +78,7 @@ void Connection::WriteCallback() {
 }
 
 void Connection::Send(const char *data, size_t size) {
-    outputBuffer_.Append(data, size);	
+    outputBuffer_.AppendWithHead(data, size);
 	clientChannel_->EnableWriting();
 }
 

@@ -9,6 +9,7 @@ class Buffer {
     ~Buffer();
 
     void Append(const char *data, size_t size);
+	void AppendWithHead(const char *data, size_t size);
     size_t Size() const;
     const char *Data() const;
     void Clear();

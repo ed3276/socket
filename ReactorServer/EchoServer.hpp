@@ -9,7 +9,7 @@ class EchoServer {
 	~EchoServer();
 	void Start();
     void HandleNewConnection(Connection *clientSock);
-	void HandleMessage(Connection *conn, std::string message);
+	void HandleMessage(Connection *conn, std::string &message);
     void HandleClose(Connection *conn);
     void HandleError(Connection *conn);
     void HandleSendComplete(Connection *conn);

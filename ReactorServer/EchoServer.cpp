@@ -22,15 +22,9 @@ void EchoServer::HandleNewConnection(Connection *conn) {
     printf("New Connection Come in.\n");
 }
 
-void EchoServer::HandleMessage(Connection *conn, std::string message) {
-	std::string tmpBuf;
-	int len;
-	message = std::string("reply:") + message;
-
-	len = message.size();
-	tmpBuf = std::string((char*)&len, sizeof(len));
-	tmpBuf.append(message);
-	conn->Send(tmpBuf.data(), tmpBuf.size());
+void EchoServer::HandleMessage(Connection *conn, std::string &message) {
+	message = "reply:" + message;
+	conn->Send(message.data(), message.size());
 }
 
 void EchoServer::HandleClose(Connection *conn) {
