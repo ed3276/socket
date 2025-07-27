@@ -1,5 +1,5 @@
 #include <iostream>
-#include "TcpServer.hpp"
+#include "EchoServer.hpp"
 
 extern int h_errno;
 
@@ -9,8 +9,8 @@ int main(int argc, char **argv) {
 		exit(0);
 	}
 
-    TcpServer tcpserver(argv[1], std::stoi(argv[2]));
-    tcpserver.Start();
+    EchoServer echoserver(argv[1], std::stoi(argv[2]));
+    echoserver.Start();
 
 	exit(0);
 }

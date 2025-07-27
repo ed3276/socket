@@ -24,36 +24,63 @@ void TcpServer::NewConnection(Socket *clientSock) {
     conn->SetOnMessageCallback(std::bind(&TcpServer::OnMessage, this, std::placeholders::_1, std::placeholders::_2));
     conn->SetSendCompleteCallback(std::bind(&TcpServer::SendComplete, this, std::placeholders::_1));
     conns_[conn->Fd()] = conn;
-	printf("new connection fd(%d) %s:%d ok\n", conn->Fd(), conn->Ip().c_str(), conn->Port());
+	//printf("new connection fd(%d) %s:%d ok\n", conn->Fd(), conn->Ip().c_str(), conn->Port());
+	newConnectionCb_(conn);
 }
 
 void TcpServer::OnMessage(Connection *conn, std::string message) {
-	std::string tmpBuf;
-	int len;
-	message = std::string("reply:") + message;
-
-	len = message.size();
-	tmpBuf = std::string((char*)&len, sizeof(len));
-	tmpBuf.append(message);
-	conn->Send(tmpBuf.data(), tmpBuf.size());
+	onMessageCb_(conn, message);
 }
 
 void TcpServer::CloseConnection(Connection *conn) {
-	printf("client fd(%d) disconnected\n", conn->Fd());
+	closeConnectionCb_(conn);
+	//printf("client fd(%d) disconnected\n", conn->Fd());
     conns_.erase(conn->Fd());
     delete conn;
 }
 
 void TcpServer::ErrorConnection(Connection *conn) {
-	printf("client fd(%d) error\n", conn->Fd());
+	errorConnectionCb_(conn);
+	//printf("client fd(%d) error\n", conn->Fd());
     conns_.erase(conn->Fd());
     delete conn;
 }
 
 void TcpServer::SendComplete(Connection *conn) {
-    printf("send complete.\n");
+	sendCompleteCb_(conn);
 }
 
 void TcpServer::EpollTimeOut(EventLoop *loop) {
-    printf("epoll_wait() timeout\n");
+	timeoutCb_(loop);
 }
+
+void TcpServer::SetNewConnectionCb(std::function<void(Connection*)> fn) {
+	if (newConnectionCb_)
+	    newConnectionCb_ = fn;
+}
+
+void TcpServer::SetCloseConnectionCb(std::function<void(Connection*)> fn) {
+	if (closeConnectionCb_)
+        closeConnectionCb_ = fn;
+}
+
+void TcpServer::SetErrorConnectionCb(std::function<void(Connection*)> fn) {
+    if (errorConnectionCb_)
+		errorConnectionCb_ = fn;
+}
+
+void TcpServer::SetOnMessageCb(std::function<void(Connection*, std::string)> fn) {
+	if (onMessageCb_)
+        onMessageCb_ = fn;
+}
+
+void TcpServer::SetSendCompleteCb(std::function<void(Connection*)> fn) {
+	if (sendCompleteCb_)
+        sendCompleteCb_ = fn;
+}
+
+void TcpServer::SetTimeOutCb(std::function<void(EventLoop*)> fn) {
+	if (timeoutCb_)
+        timeoutCb_ = fn;
+}
+
