@@ -5,7 +5,7 @@
 
 class EchoServer {
  public:
-	EchoServer(const std::string ip, const uint16_t port);
+	EchoServer(const std::string ip, const uint16_t port, size_t threadNum = 3);
 	~EchoServer();
 	void Start();
     void HandleNewConnection(Connection *clientSock);

@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+
 #include "EventLoop.hpp"
 
 EventLoop::EventLoop() {
@@ -9,8 +13,9 @@ EventLoop::~EventLoop() {
 }
 
 void EventLoop::Run() {
+//	printf("EventLoop::Run() thread is %ld.\n", syscall(SYS_gettid));
 	while(true) {
-		std::vector<Channel*> channels = ep_->Loop(10*1000);
+		std::vector<Channel*> channels = ep_->Loop();
 		if (channels.empty()) {
 			epollTimeOutCallback_(this);
 		} else {

@@ -1,24 +1,45 @@
 #include "TcpServer.hpp"
 
-TcpServer::TcpServer(const std::string ip, const uint16_t port) {
-    acceptor_ = new Acceptor(&loop_, ip, port);
+TcpServer::TcpServer(const std::string ip, const uint16_t port, size_t threadNum): threadNum_(threadNum) {
+	mainloop_ = new EventLoop;
+	mainloop_->SetEpollTimeOutCallback_(std::bind(&TcpServer::EpollTimeOut, this, std::placeholders::_1));
+
+    acceptor_ = new Acceptor(mainloop_, ip, port);
     acceptor_->SetNewConnectionCb(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1));
-	loop_.SetEpollTimeOutCallback_(std::bind(&TcpServer::EpollTimeOut, this, std::placeholders::_1));
+
+	threadpool_ = new ThreadPool(threadNum_);
+
+	for (size_t i = 0; i < threadNum_; ++i) {
+		subloops_.push_back(new EventLoop);
+	    subloops_[i]->SetEpollTimeOutCallback_(std::bind(&TcpServer::EpollTimeOut, this, std::placeholders::_1));
+		threadpool_->enqueue(std::bind(&EventLoop::Run, subloops_[i]));
+	}
 }
 
 TcpServer::~TcpServer() {
     delete acceptor_;
+    delete mainloop_;
+
     for (auto &conn : conns_) {
         delete conn.second;
     }
+
+    for (auto loop : subloops_) {
+        delete loop;
+    }
+
+    delete threadpool_;
 }
 
 void TcpServer::Start() {
-    loop_.Run();
+    mainloop_->Run();
 }
 
 void TcpServer::NewConnection(Socket *clientSock) {
-    Connection *conn = new Connection(&loop_, clientSock);
+    //Connection *conn = new Connection(mainloop_, clientSock);
+	//把新建的conn分配给从事件循环
+	size_t eloopIdx = clientSock->Fd() % threadNum_;
+    Connection *conn = new Connection(subloops_.at(eloopIdx), clientSock);
     conn->SetCloseCallback(std::bind(&TcpServer::CloseConnection, this, std::placeholders::_1));
     conn->SetErrorCallback(std::bind(&TcpServer::ErrorConnection, this, std::placeholders::_1));
     conn->SetOnMessageCallback(std::bind(&TcpServer::OnMessage, this, std::placeholders::_1, std::placeholders::_2));

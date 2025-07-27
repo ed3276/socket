@@ -12,7 +12,6 @@
 #include <stdexcept>
 
 #include <stdio.h>
-#define _GNU_SOURCE
 #include <unistd.h>
 #include <sys/syscall.h>
 
@@ -43,7 +42,7 @@ inline ThreadPool::ThreadPool(size_t threads)
         workers.emplace_back(
             [this]
             {
-			    printf("create thread(%d).\n", syscall(SYS_gettid)); //显示线程ID
+                printf("create thread(%ld).\n", syscall(SYS_gettid)); //显示线程ID
                 for(;;)
                 {
                     std::function<void()> task;
@@ -56,7 +55,6 @@ inline ThreadPool::ThreadPool(size_t threads)
                         task = std::move(this->tasks.front());
                         this->tasks.pop();
                     }
-			        printf("create thread(%d).\n", syscall(SYS_gettid)); //显示线程ID
                     task();
                 }
             }
