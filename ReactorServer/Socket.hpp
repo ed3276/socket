@@ -16,10 +16,10 @@ class Socket {
     int Fd() const;
     std::string Ip() const;
     uint16_t Port() const;
-	void SetReuseAddr(bool on);
-	void SetReusePort(bool on);
-	void SetTcpNoDelay(bool on);
-	void SetKeepAlive(bool on);
+    void SetReuseAddr(bool on);
+    void SetReusePort(bool on);
+    void SetTcpNoDelay(bool on);
+    void SetKeepAlive(bool on);
 
     void Bind(const InetAddress &servaddr);
     void Listen(int num = 128);

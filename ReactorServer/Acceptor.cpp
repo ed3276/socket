@@ -28,8 +28,8 @@ Acceptor::~Acceptor() {
 }
 
 void Acceptor::NewConnection() {
-	InetAddress clientaddr;
-	Socket *pClientsock = new Socket(servSock_->Accept(clientaddr));
+    InetAddress clientaddr;
+    Socket *pClientsock = new Socket(servSock_->Accept(clientaddr));
     pClientsock->SetIp(clientaddr.Ip());
     pClientsock->SetPort(clientaddr.Port());
     newConnectionCb_(pClientsock);

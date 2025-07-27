@@ -3,13 +3,13 @@
 
 Connection::Connection(EventLoop *loop, Socket *clientSock) :
     loop_(loop), clientSock_(clientSock) {
-	clientChannel_ = new Channel(loop, clientSock_->Fd());
+    clientChannel_ = new Channel(loop, clientSock_->Fd());
     clientChannel_->SetReadCallback(std::bind(&Connection::OnMessage, this));
     clientChannel_->SetWriteCallback(std::bind(&Connection::WriteCallback, this));
     clientChannel_->SetCloseCallback(std::bind(&Connection::CloseCallback, this));
     clientChannel_->SetErrorCallback(std::bind(&Connection::ErrorCallback, this));
-	clientChannel_->UseET();
-	clientChannel_->EnableReading();
+    clientChannel_->UseET();
+    clientChannel_->EnableReading();
 
 }
 
@@ -32,22 +32,22 @@ uint16_t Connection::Port() const {
 }
 
 void Connection::OnMessage() {
-	size_t byteN = 1024;
-	ssize_t recvN = 0;
-	std::string buffer(byteN, 0);
-	std::string message;
+    size_t byteN = 1024;
+    ssize_t recvN = 0;
+    std::string buffer(byteN, 0);
+    std::string message;
     uint32_t len;
-	while (true) {
-		recvN = recv(Fd(), &buffer[0], buffer.size(), 0);
-		if (recvN > 0) {
-			inputBuffer_.Append(buffer.data(), recvN);
-		} else if (recvN < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-			while (true) {
-				if (inputBuffer_.Size() < sizeof(len)) break;
-				memcpy(&len, inputBuffer_.Data(), sizeof(len));
-				if (inputBuffer_.Size() < len + sizeof(len)) break;
-				message.assign(inputBuffer_.Data()+sizeof(len), len);
-				inputBuffer_.Erase(0, len+sizeof(len));
+    while (true) {
+        recvN = recv(Fd(), &buffer[0], buffer.size(), 0);
+        if (recvN > 0) {
+            inputBuffer_.Append(buffer.data(), recvN);
+        } else if (recvN < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+            while (true) {
+                if (inputBuffer_.Size() < sizeof(len)) break;
+                memcpy(&len, inputBuffer_.Data(), sizeof(len));
+                if (inputBuffer_.Size() < len + sizeof(len)) break;
+                message.assign(inputBuffer_.Data()+sizeof(len), len);
+                inputBuffer_.Erase(0, len+sizeof(len));
                 printf("recv from fd(%d) [%s]\n", Fd(), message.c_str());
 
                 onMessageCallback_(this, message);
@@ -68,18 +68,18 @@ void Connection::OnMessage() {
 
 void Connection::WriteCallback() {
     int write = send(Fd(), outputBuffer_.Data(), outputBuffer_.Size(), 0);
-	if (write > 0) {
+    if (write > 0) {
         outputBuffer_.Erase(0, write);
     }
-	if (outputBuffer_.Empty()) {
+    if (outputBuffer_.Empty()) {
         clientChannel_->DisableWriting();
-		sendCompleteCallback_(this);
+        sendCompleteCallback_(this);
     }
 }
 
 void Connection::Send(const char *data, size_t size) {
     outputBuffer_.AppendWithHead(data, size);
-	clientChannel_->EnableWriting();
+    clientChannel_->EnableWriting();
 }
 
 void Connection::CloseCallback() {
@@ -103,5 +103,5 @@ void Connection::SetOnMessageCallback(std::function<void(Connection*, std::strin
 }
 
 void Connection::SetSendCompleteCallback(std::function<void(Connection*)> fn) {
-	sendCompleteCallback_ = fn;
+    sendCompleteCallback_ = fn;
 }

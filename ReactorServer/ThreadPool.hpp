@@ -17,7 +17,7 @@
 
 class ThreadPool {
 public:
-    ThreadPool(size_t);
+    ThreadPool(size_t, std::string);
     template<class F, class... Args>
     auto enqueue(F&& f, Args&&... args)
         -> std::future<typename std::result_of<F(Args...)>::type>;
@@ -32,17 +32,18 @@ private:
     std::mutex queue_mutex;
     std::condition_variable condition;
     bool stop;
+    std::string name;
 };
 
 // the constructor just launches some amount of workers
-inline ThreadPool::ThreadPool(size_t threads)
-    :   stop(false)
+inline ThreadPool::ThreadPool(size_t threads, std::string threadName)
+    :   stop(false), name(threadName)
 {
     for(size_t i = 0;i<threads;++i)
         workers.emplace_back(
             [this]
             {
-                printf("create thread(%ld).\n", syscall(SYS_gettid)); //显示线程ID
+                printf("create %s thread(%ld).\n", name.c_str(), syscall(SYS_gettid)); //显示线程ID
                 for(;;)
                 {
                     std::function<void()> task;
@@ -55,6 +56,7 @@ inline ThreadPool::ThreadPool(size_t threads)
                         task = std::move(this->tasks.front());
                         this->tasks.pop();
                     }
+                    printf("%s(%ld) execute task.\n", name.c_str(), syscall(SYS_gettid)); //显示线程ID
                     task();
                 }
             }

@@ -13,18 +13,17 @@ EventLoop::~EventLoop() {
 }
 
 void EventLoop::Run() {
-//	printf("EventLoop::Run() thread is %ld.\n", syscall(SYS_gettid));
-	while(true) {
-		std::vector<Channel*> channels = ep_->Loop();
-		if (channels.empty()) {
-			epollTimeOutCallback_(this);
-		} else {
-			for (auto &ch : channels) {
-				ch->HandleEvent();
-			}
-		}
-
-	}
+//  printf("EventLoop::Run() thread is %ld.\n", syscall(SYS_gettid));
+    while(true) {
+        std::vector<Channel*> channels = ep_->Loop();
+        if (channels.empty()) {
+            epollTimeOutCallback_(this);
+        } else {
+            for (auto &ch : channels) {
+                ch->HandleEvent();
+            }
+        }
+    }
 }
 
 void EventLoop::UpdateChannel(Channel *ch) {
@@ -32,5 +31,5 @@ void EventLoop::UpdateChannel(Channel *ch) {
 }
 
 void EventLoop::SetEpollTimeOutCallback_(std::function<void(EventLoop *)> fn) {
-	epollTimeOutCallback_ = fn;
+    epollTimeOutCallback_ = fn;
 }

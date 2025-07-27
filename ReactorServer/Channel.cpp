@@ -57,15 +57,15 @@ uint32_t Channel::Revents() const {
 }
 
 void Channel::HandleEvent() {
-	if (revents_ & EPOLLRDHUP) {
+    if (revents_ & EPOLLRDHUP) {
         closeCallback_();
-	} else if (revents_ & (EPOLLIN | EPOLLPRI)) {
+    } else if (revents_ & (EPOLLIN | EPOLLPRI)) {
         readCallback_();
-	} else if (revents_ & EPOLLOUT) {
+    } else if (revents_ & EPOLLOUT) {
         writeCallback_();
-	} else {
+    } else {
         errorCallback_();
-	}
+    }
 }
 
 void Channel::SetReadCallback(std::function<void()> fn) {
