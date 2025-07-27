@@ -1,5 +1,5 @@
 #pragma once
-
+#include <functional>
 #include "Epoll.hpp"
 
 class Channel;
@@ -12,6 +12,8 @@ class EventLoop {
 
     void Run();
     void UpdateChannel(Channel *ch);
+    void SetEpollTimeOutCallback_(std::function<void(EventLoop *)>);
  private:
     Epoll *ep_;   //每个事件循环只有一个Epoll
+	std::function<void(EventLoop *)> epollTimeOutCallback_;
 };

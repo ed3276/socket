@@ -28,6 +28,7 @@ class Connection {
     void SetCloseCallback(std::function<void(Connection*)>);
     void SetErrorCallback(std::function<void(Connection*)>);
     void SetOnMessageCallback(std::function<void(Connection*, std::string)>);
+    void SetSendCompleteCallback(std::function<void(Connection*)>);
  private:
     EventLoop *loop_; //Connection对应的事件循环, 在构造函数中传入
     Socket *clientSock_;
@@ -37,4 +38,5 @@ class Connection {
     std::function<void(Connection*)> closeCallback_;
     std::function<void(Connection*)> errorCallback_;
     std::function<void(Connection*, std::string)> onMessageCallback_;
+    std::function<void(Connection*)> sendCompleteCallback_;
 };

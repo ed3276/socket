@@ -3,6 +3,7 @@
 TcpServer::TcpServer(const std::string ip, const uint16_t port) {
     acceptor_ = new Acceptor(&loop_, ip, port);
     acceptor_->SetNewConnectionCb(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1));
+	loop_.SetEpollTimeOutCallback_(std::bind(&TcpServer::EpollTimeOut, this, std::placeholders::_1));
 }
 
 TcpServer::~TcpServer() {
@@ -21,6 +22,7 @@ void TcpServer::NewConnection(Socket *clientSock) {
     conn->SetCloseCallback(std::bind(&TcpServer::CloseConnection, this, std::placeholders::_1));
     conn->SetErrorCallback(std::bind(&TcpServer::ErrorConnection, this, std::placeholders::_1));
     conn->SetOnMessageCallback(std::bind(&TcpServer::OnMessage, this, std::placeholders::_1, std::placeholders::_2));
+    conn->SetSendCompleteCallback(std::bind(&TcpServer::SendComplete, this, std::placeholders::_1));
     conns_[conn->Fd()] = conn;
 	printf("new connection fd(%d) %s:%d ok\n", conn->Fd(), conn->Ip().c_str(), conn->Port());
 }
@@ -33,7 +35,6 @@ void TcpServer::OnMessage(Connection *conn, std::string message) {
 	len = message.size();
 	tmpBuf = std::string((char*)&len, sizeof(len));
 	tmpBuf.append(message);
-	//send(conn->Fd(), tmpBuf.data(), tmpBuf.size(), 0);
 	conn->Send(tmpBuf.data(), tmpBuf.size());
 }
 
@@ -47,4 +48,12 @@ void TcpServer::ErrorConnection(Connection *conn) {
 	printf("client fd(%d) error\n", conn->Fd());
     conns_.erase(conn->Fd());
     delete conn;
+}
+
+void TcpServer::SendComplete(Connection *conn) {
+    printf("send complete.\n");
+}
+
+void TcpServer::EpollTimeOut(EventLoop *loop) {
+    printf("epoll_wait() timeout\n");
 }

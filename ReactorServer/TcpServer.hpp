@@ -16,6 +16,8 @@ class TcpServer {
 	void OnMessage(Connection *conn, std::string message);
     void CloseConnection(Connection *conn);
     void ErrorConnection(Connection *conn);
+    void SendComplete(Connection *conn);
+    void EpollTimeOut(EventLoop *loop);
  private:
     EventLoop loop_;  //一个TcpServer可以有多个事件循环
     Acceptor *acceptor_; //一个TcpServer只有一个Acceptor对象

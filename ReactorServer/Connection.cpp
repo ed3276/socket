@@ -71,8 +71,9 @@ void Connection::WriteCallback() {
 	if (write > 0) {
         outputBuffer_.Erase(0, write);
     }
-	if (outputBuffer_.Size()) {
+	if (outputBuffer_.Empty()) {
         clientChannel_->DisableWriting();
+		sendCompleteCallback_(this);
     }
 }
 
@@ -99,4 +100,8 @@ void Connection::SetErrorCallback(std::function<void(Connection*)> fn) {
 
 void Connection::SetOnMessageCallback(std::function<void(Connection*, std::string)> fn) {
     onMessageCallback_ = fn;
+}
+
+void Connection::SetSendCompleteCallback(std::function<void(Connection*)> fn) {
+	sendCompleteCallback_ = fn;
 }
