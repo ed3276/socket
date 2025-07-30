@@ -7,6 +7,7 @@
 #include "Socket.hpp"
 #include "Channel.hpp"
 #include "EventLoop.hpp"
+#include "Connection.hpp"
 #include "Buffer.hpp"
 
 class Socket;
@@ -18,7 +19,7 @@ using spConnection = std::shared_ptr<Connection>;
 
 class Connection : public std::enable_shared_from_this<Connection> {
  public:
-    Connection(EventLoop *loop, Socket *clientSock);
+    Connection(EventLoop *loop, std::unique_ptr<Socket> clientSock);
     ~Connection();
 
     int Fd() const;
@@ -36,8 +37,8 @@ class Connection : public std::enable_shared_from_this<Connection> {
     void SetSendCompleteCallback(std::function<void(spConnection)>);
  private:
     EventLoop *loop_; //Connection对应的事件循环, 在构造函数中传入
-    Socket *clientSock_;
-    Channel *clientChannel_;
+    std::unique_ptr<Socket> clientSock_;
+    Channel clientChannel_;
     Buffer inputBuffer_;
     Buffer outputBuffer_;
     std::atomic_bool disconnect_;

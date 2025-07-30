@@ -5,17 +5,17 @@
 #include "EventLoop.hpp"
 
 EventLoop::EventLoop() {
-    ep_ = new Epoll;
+
 }
 
 EventLoop::~EventLoop() {
-    if (ep_) delete ep_;
+
 }
 
 void EventLoop::Run() {
 //  printf("EventLoop::Run() thread is %ld.\n", syscall(SYS_gettid));
     while(true) {
-        std::vector<Channel*> channels = ep_->Loop();
+        std::vector<Channel*> channels = ep_.Loop();
         if (channels.empty()) {
             epollTimeOutCallback_(this);
         } else {
@@ -27,11 +27,11 @@ void EventLoop::Run() {
 }
 
 void EventLoop::UpdateChannel(Channel *ch) {
-    ep_->UpdateChannel(ch);
+    ep_.UpdateChannel(ch);
 }
 
 void EventLoop::RemoveChannel(Channel *ch) {
-    ep_->RemoveChannel(ch);
+    ep_.RemoveChannel(ch);
 }
 
 void EventLoop::SetEpollTimeOutCallback_(std::function<void(EventLoop *)> fn) {

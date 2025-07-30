@@ -1,41 +1,34 @@
 #include "TcpServer.hpp"
 
-TcpServer::TcpServer(const std::string ip, const uint16_t port, size_t threadNum): threadNum_(threadNum) {
-    mainloop_ = new EventLoop;
+TcpServer::TcpServer(const std::string ip, const uint16_t port, size_t threadNum) :
+    mainloop_(new EventLoop),
+    acceptor_(mainloop_.get(), ip, port),
+    threadpool_(threadNum_, "IO"),
+    threadNum_(threadNum) {
     mainloop_->SetEpollTimeOutCallback_(std::bind(&TcpServer::EpollTimeOut, this, std::placeholders::_1));
 
-    acceptor_ = new Acceptor(mainloop_, ip, port);
-    acceptor_->SetNewConnectionCb(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1));
-
-    threadpool_ = new ThreadPool(threadNum_, "IO");
+    acceptor_.SetNewConnectionCb(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1));
 
     for (size_t i = 0; i < threadNum_; ++i) {
-        subloops_.push_back(new EventLoop);
+        subloops_.emplace_back(new EventLoop);
         subloops_[i]->SetEpollTimeOutCallback_(std::bind(&TcpServer::EpollTimeOut, this, std::placeholders::_1));
-        threadpool_->enqueue(std::bind(&EventLoop::Run, subloops_[i]));
+        threadpool_.enqueue(std::bind(&EventLoop::Run, subloops_[i].get()));
     }
 }
 
 TcpServer::~TcpServer() {
-    delete acceptor_;
-    delete mainloop_;
 
-    for (auto loop : subloops_) {
-        delete loop;
-    }
-
-    delete threadpool_;
 }
 
 void TcpServer::Start() {
     mainloop_->Run();
 }
 
-void TcpServer::NewConnection(Socket *clientSock) {
+void TcpServer::NewConnection(std::unique_ptr<Socket> clientSock) {
     //Connection *conn = new Connection(mainloop_, clientSock);
     //把新建的conn分配给从事件循环
     size_t eloopIdx = clientSock->Fd() % threadNum_;
-    spConnection conn(new Connection(subloops_.at(eloopIdx), clientSock));
+    spConnection conn(new Connection(subloops_.at(eloopIdx).get(), std::move(clientSock)));
     conn->SetCloseCallback(std::bind(&TcpServer::CloseConnection, this, std::placeholders::_1));
     conn->SetErrorCallback(std::bind(&TcpServer::ErrorConnection, this, std::placeholders::_1));
     conn->SetOnMessageCallback(std::bind(&TcpServer::OnMessage, this, std::placeholders::_1, std::placeholders::_2));

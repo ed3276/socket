@@ -1,21 +1,20 @@
 #include <string.h>
 #include "Connection.hpp"
 
-Connection::Connection(EventLoop *loop, Socket *clientSock) :
-    loop_(loop), clientSock_(clientSock), disconnect_(false) {
-    clientChannel_ = new Channel(loop, clientSock_->Fd());
-    clientChannel_->SetReadCallback(std::bind(&Connection::OnMessage, this));
-    clientChannel_->SetWriteCallback(std::bind(&Connection::WriteCallback, this));
-    clientChannel_->SetCloseCallback(std::bind(&Connection::CloseCallback, this));
-    clientChannel_->SetErrorCallback(std::bind(&Connection::ErrorCallback, this));
-    clientChannel_->UseET();
-    clientChannel_->EnableReading();
+Connection::Connection(EventLoop *loop, std::unique_ptr<Socket> clientSock) :
+    loop_(loop), clientSock_(std::move(clientSock)),
+    clientChannel_(loop, clientSock_->Fd()), disconnect_(false) {
+    clientChannel_.SetReadCallback(std::bind(&Connection::OnMessage, this));
+    clientChannel_.SetWriteCallback(std::bind(&Connection::WriteCallback, this));
+    clientChannel_.SetCloseCallback(std::bind(&Connection::CloseCallback, this));
+    clientChannel_.SetErrorCallback(std::bind(&Connection::ErrorCallback, this));
+    clientChannel_.UseET();
+    clientChannel_.EnableReading();
 
 }
 
 Connection::~Connection() {
-    delete clientSock_; 
-    delete clientChannel_;
+
 }
 
 
@@ -72,7 +71,7 @@ void Connection::WriteCallback() {
         outputBuffer_.Erase(0, write);
     }
     if (outputBuffer_.Empty()) {
-        clientChannel_->DisableWriting();
+        clientChannel_.DisableWriting();
         sendCompleteCallback_(shared_from_this());
     }
 }
@@ -82,18 +81,18 @@ void Connection::Send(const char *data, size_t size) {
         return;
     }
     outputBuffer_.AppendWithHead(data, size);
-    clientChannel_->EnableWriting();
+    clientChannel_.EnableWriting();
 }
 
 void Connection::CloseCallback() {
     disconnect_ = true;
-    clientChannel_->Remove();
+    clientChannel_.Remove();
     closeCallback_(shared_from_this());
 }
 
 void Connection::ErrorCallback() {
     disconnect_ = true;
-    clientChannel_->Remove();
+    clientChannel_.Remove();
     errorCallback_(shared_from_this());
 }
 

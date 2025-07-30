@@ -1,9 +1,10 @@
 #pragma once
-
+#include <memory>
 #include <map>
-#include "EventLoop.hpp"
 #include "Socket.hpp"
 #include "Channel.hpp"
+#include "EventLoop.hpp"
+#include "Connection.hpp"
 #include "Acceptor.hpp"
 #include "ThreadPool.hpp"
 
@@ -13,7 +14,7 @@ class TcpServer {
     ~TcpServer();
 
     void Start();
-    void NewConnection(Socket *clientSock);
+    void NewConnection(std::unique_ptr<Socket> clientSock);
     void OnMessage(spConnection conn, std::string &message);
     void CloseConnection(spConnection conn);
     void ErrorConnection(spConnection conn);
@@ -27,11 +28,11 @@ class TcpServer {
     void SetSendCompleteCb(std::function<void(spConnection)>);
     void SetTimeOutCb(std::function<void(EventLoop*)>);
  private:
-    EventLoop *mainloop_;  //主事件循环
-    std::vector<EventLoop*> subloops_; //存放从事件循环
-    Acceptor *acceptor_; //一个TcpServer只有一个Acceptor对象
-    ThreadPool *threadpool_;
+    std::unique_ptr<EventLoop> mainloop_;  //主事件循环
+    std::vector<std::unique_ptr<EventLoop>> subloops_; //存放从事件循环
+    Acceptor acceptor_; //一个TcpServer只有一个Acceptor对象
     size_t threadNum_;    //线程池大小, 即从事件循环的个数
+    ThreadPool threadpool_;
     std::map<int, spConnection> conns_;
     std::function<void(spConnection)> newConnectionCb_;
     std::function<void(spConnection)> closeConnectionCb_;
