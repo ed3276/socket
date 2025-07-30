@@ -19,6 +19,8 @@ class Channel {
     void DisableReading();
     void EnableWriting();
     void DisableWriting();
+    void DisableAll();
+    void Remove();
     void SetInEpoll();
     void SetRevents(uint32_t ev);
     bool InPoll() const;

@@ -2,7 +2,7 @@
 #include "Connection.hpp"
 
 Connection::Connection(EventLoop *loop, Socket *clientSock) :
-    loop_(loop), clientSock_(clientSock) {
+    loop_(loop), clientSock_(clientSock), disconnect_(false) {
     clientChannel_ = new Channel(loop, clientSock_->Fd());
     clientChannel_->SetReadCallback(std::bind(&Connection::OnMessage, this));
     clientChannel_->SetWriteCallback(std::bind(&Connection::WriteCallback, this));
@@ -50,7 +50,7 @@ void Connection::OnMessage() {
                 inputBuffer_.Erase(0, len+sizeof(len));
                 printf("recv from fd(%d) [%s]\n", Fd(), message.c_str());
 
-                onMessageCallback_(this, message);
+                onMessageCallback_(shared_from_this(), message);
             }
             break;
         } else if (recvN < 0 && errno == EINTR) {
@@ -73,35 +73,42 @@ void Connection::WriteCallback() {
     }
     if (outputBuffer_.Empty()) {
         clientChannel_->DisableWriting();
-        sendCompleteCallback_(this);
+        sendCompleteCallback_(shared_from_this());
     }
 }
 
 void Connection::Send(const char *data, size_t size) {
+    if (disconnect_ == true) {
+        return;
+    }
     outputBuffer_.AppendWithHead(data, size);
     clientChannel_->EnableWriting();
 }
 
 void Connection::CloseCallback() {
-    closeCallback_(this);
+    disconnect_ = true;
+    clientChannel_->Remove();
+    closeCallback_(shared_from_this());
 }
 
 void Connection::ErrorCallback() {
-    errorCallback_(this);
+    disconnect_ = true;
+    clientChannel_->Remove();
+    errorCallback_(shared_from_this());
 }
 
-void Connection::SetCloseCallback(std::function<void(Connection*)> fn) {
+void Connection::SetCloseCallback(std::function<void(spConnection)> fn) {
     closeCallback_ = fn;
 }
 
-void Connection::SetErrorCallback(std::function<void(Connection*)> fn) {
+void Connection::SetErrorCallback(std::function<void(spConnection)> fn) {
     errorCallback_ = fn;
 }
 
-void Connection::SetOnMessageCallback(std::function<void(Connection*, std::string)> fn) {
+void Connection::SetOnMessageCallback(std::function<void(spConnection, std::string&)> fn) {
     onMessageCallback_ = fn;
 }
 
-void Connection::SetSendCompleteCallback(std::function<void(Connection*)> fn) {
+void Connection::SetSendCompleteCallback(std::function<void(spConnection)> fn) {
     sendCompleteCallback_ = fn;
 }

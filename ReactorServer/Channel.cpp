@@ -36,6 +36,16 @@ void Channel::DisableWriting() {
     loop_->UpdateChannel(this);
 }
 
+void Channel::DisableAll() {
+    events_ = 0;
+    loop_->UpdateChannel(this);
+}
+
+void Channel::Remove() {
+    DisableAll();
+    loop_->RemoveChannel(this);
+}
+
 void Channel::SetInEpoll() {
     inEpoll_ = true;
 }

@@ -13,14 +13,14 @@ class EchoServer {
         size_t workThreadNum = 5);
     ~EchoServer();
     void Start();
-    void HandleNewConnection(Connection *clientSock);
-    void HandleMessage(Connection *conn, std::string &message);
-    void HandleClose(Connection *conn);
-    void HandleError(Connection *conn);
-    void HandleSendComplete(Connection *conn);
+    void HandleNewConnection(spConnection conn);
+    void HandleMessage(spConnection conn, std::string &message);
+    void HandleClose(spConnection conn);
+    void HandleError(spConnection conn);
+    void HandleSendComplete(spConnection conn);
     void HandleTimeOut(EventLoop *loop);
 
-    void OnMessage(Connection* conn, std::string message);
+    void OnMessage(spConnection conn, std::string message);
 
 private:
      TcpServer tcpserver_;
