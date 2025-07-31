@@ -3,8 +3,8 @@
 TcpServer::TcpServer(const std::string ip, const uint16_t port, size_t threadNum) :
     mainloop_(new EventLoop),
     acceptor_(mainloop_.get(), ip, port),
-    threadpool_(threadNum_, "IO"),
-    threadNum_(threadNum) {
+    threadNum_(threadNum),
+    threadpool_(threadNum_, "IO") {
     mainloop_->SetEpollTimeOutCallback_(std::bind(&TcpServer::EpollTimeOut, this, std::placeholders::_1));
 
     acceptor_.SetNewConnectionCb(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1));

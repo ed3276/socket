@@ -71,7 +71,6 @@ void Connection::WriteCallback() {
     if (write > 0) {
         outputBuffer_.Erase(0, write);
     }
-    printf("conn::WriteCallback() thread is %ld.\n", syscall(SYS_gettid));
     if (outputBuffer_.Empty()) {
         clientChannel_.DisableWriting();
         sendCompleteCallback_(shared_from_this());
@@ -82,8 +81,18 @@ void Connection::Send(const char *data, size_t size) {
     if (disconnect_ == true) {
         return;
     }
-    printf("conn::Send() thread is %ld.\n", syscall(SYS_gettid));
-    outputBuffer_.AppendWithHead(data, size);
+    std::shared_ptr<std::string> msg(new std::string(data, size));
+    if (loop_->InThreadLoop()) {
+        printf("send()在事件循环线程中\n");
+        SendInLoop(std::move(msg));
+    } else {
+        printf("send()不在事件循环线程中\n");
+        loop_->QueueInLoop(std::bind(&Connection::SendInLoop, this, msg));
+    }
+}
+
+void Connection::SendInLoop(std::shared_ptr<std::string> msg) {
+    outputBuffer_.AppendWithHead(msg->data(), msg->size());
     clientChannel_.EnableWriting();
 }
 

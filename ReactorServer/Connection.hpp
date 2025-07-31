@@ -28,6 +28,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
 
     void OnMessage();
     void Send(const char *data, size_t size);
+    void SendInLoop(std::shared_ptr<std::string> msg);
     void WriteCallback();
     void CloseCallback();
     void ErrorCallback();

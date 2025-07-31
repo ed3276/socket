@@ -19,7 +19,6 @@ void EchoServer::Start() {
 }
 
 void EchoServer::HandleNewConnection(spConnection conn) {
-    printf("New Connection Come in.\n");
     printf("EchoServer::HandleNewConnection() thread is %ld.\n", syscall(SYS_gettid));
 }
 

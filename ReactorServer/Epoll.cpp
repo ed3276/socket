@@ -47,7 +47,7 @@ std::vector<Channel*> Epoll::Loop(int timeout) {
     int retval;
     retval = epoll_wait(epollfd_, &events_[0], MaxEvents, timeout);
     if (retval < 0) {
-        perror("poll()");
+        perror("epoll()");
         exit(-1);
     } else if (retval == 0) {
 
