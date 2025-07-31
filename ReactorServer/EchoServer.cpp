@@ -24,8 +24,12 @@ void EchoServer::HandleNewConnection(spConnection conn) {
 }
 
 void EchoServer::HandleMessage(spConnection conn, std::string &message) {
-    printf("EchoServer::HandleMessage() thread is %ld.\n", syscall(SYS_gettid));
-    threadpool_.enqueue(std::bind(&EchoServer::OnMessage, this, conn, message));
+    //printf("EchoServer::HandleMessage() thread is %ld.\n", syscall(SYS_gettid));
+    if(threadpool_.size() == 0) {
+        OnMessage(conn, message);
+    } else {
+        threadpool_.enqueue(std::bind(&EchoServer::OnMessage, this, conn, message));
+    }
 }
 
 void EchoServer::HandleClose(spConnection conn) {

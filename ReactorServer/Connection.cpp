@@ -1,4 +1,5 @@
 #include <string.h>
+#include <sys/syscall.h>
 #include "Connection.hpp"
 
 Connection::Connection(EventLoop *loop, std::unique_ptr<Socket> clientSock) :
@@ -70,6 +71,7 @@ void Connection::WriteCallback() {
     if (write > 0) {
         outputBuffer_.Erase(0, write);
     }
+    printf("conn::WriteCallback() thread is %ld.\n", syscall(SYS_gettid));
     if (outputBuffer_.Empty()) {
         clientChannel_.DisableWriting();
         sendCompleteCallback_(shared_from_this());
@@ -80,6 +82,7 @@ void Connection::Send(const char *data, size_t size) {
     if (disconnect_ == true) {
         return;
     }
+    printf("conn::Send() thread is %ld.\n", syscall(SYS_gettid));
     outputBuffer_.AppendWithHead(data, size);
     clientChannel_.EnableWriting();
 }

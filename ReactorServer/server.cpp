@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
         exit(0);
     }
 
-    EchoServer echoserver(argv[1], std::stoi(argv[2]));
+    EchoServer echoserver(argv[1], std::stoi(argv[2]), 3, 3);
     echoserver.Start();
 
     exit(0);
