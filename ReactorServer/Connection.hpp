@@ -9,6 +9,7 @@
 #include "EventLoop.hpp"
 #include "Connection.hpp"
 #include "Buffer.hpp"
+#include "TimeStamp.hpp"
 
 class Socket;
 class Channel;
@@ -48,4 +49,6 @@ class Connection : public std::enable_shared_from_this<Connection> {
     std::function<void(spConnection)> errorCallback_;
     std::function<void(spConnection, std::string&)> onMessageCallback_;
     std::function<void(spConnection)> sendCompleteCallback_;
+
+    TimeStamp lastTime_;
 };

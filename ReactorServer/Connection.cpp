@@ -49,6 +49,7 @@ void Connection::OnMessage() {
                 message.assign(inputBuffer_.Data()+sizeof(len), len);
                 inputBuffer_.Erase(0, len+sizeof(len));
                 printf("recv from fd(%d) [%s]\n", Fd(), message.c_str());
+                lastTime_ = TimeStamp::Now();
 
                 onMessageCallback_(shared_from_this(), message);
             }

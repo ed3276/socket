@@ -1,7 +1,7 @@
 #include "TcpServer.hpp"
 
 TcpServer::TcpServer(const std::string ip, const uint16_t port, size_t threadNum) :
-    mainloop_(new EventLoop),
+    mainloop_(new EventLoop(true)),
     acceptor_(mainloop_.get(), ip, port),
     threadNum_(threadNum),
     threadpool_(threadNum_, "IO") {
@@ -10,7 +10,7 @@ TcpServer::TcpServer(const std::string ip, const uint16_t port, size_t threadNum
     acceptor_.SetNewConnectionCb(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1));
 
     for (size_t i = 0; i < threadNum_; ++i) {
-        subloops_.emplace_back(new EventLoop);
+        subloops_.emplace_back(new EventLoop(false));
         subloops_[i]->SetEpollTimeOutCallback_(std::bind(&TcpServer::EpollTimeOut, this, std::placeholders::_1));
         threadpool_.enqueue(std::bind(&EventLoop::Run, subloops_[i].get()));
     }

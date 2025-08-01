@@ -4,6 +4,7 @@
 #include <mutex>
 #include <memory>
 #include <sys/eventfd.h>
+#include <sys/timerfd.h>
 #include "Epoll.hpp"
 
 class Channel;
@@ -11,7 +12,7 @@ class Epoll;
 
 class EventLoop {
  public:
-    EventLoop();
+    EventLoop(bool mainLoop = false);
     ~EventLoop();
 
     void Run();
@@ -23,6 +24,7 @@ class EventLoop {
 
     void WakeUp();
     void HandleWakeUp();
+    void HandleTimer();
  private:
     Epoll ep_;   //每个事件循环只有一个Epoll
     std::function<void(EventLoop *)> epollTimeOutCallback_;
@@ -32,4 +34,8 @@ class EventLoop {
 
     int wakeupFd_;
     std::unique_ptr<Channel> wakeupChannel_;
+    int timerFd_;
+    std::unique_ptr<Channel> timerChannel_;
+
+    bool mainLoop_;
 };
