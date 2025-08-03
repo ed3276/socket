@@ -26,9 +26,9 @@ void TcpServer::Start() {
 }
 
 void TcpServer::Stop() {
-//1. 停止主事件循环
-//2. 停止从事件循环
-//3. 停止IO线程
+    //1. 停止主事件循环
+    //2. 停止从事件循环
+    //3. 停止IO线程
     mainloop_->Stop();
     printf("主事件循环已停止\n");
     for (auto &l : subloops_) {

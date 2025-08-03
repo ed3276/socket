@@ -74,7 +74,6 @@ bool EventLoop::InThreadLoop() const {
     return threadId_ == syscall(SYS_gettid);
 }
 
-
 void EventLoop::QueueInLoop(std::function<void()> fn) {
     {
         std::lock_guard<std::mutex> lk(mtx_);
@@ -84,7 +83,6 @@ void EventLoop::QueueInLoop(std::function<void()> fn) {
     //唤醒事件循环
     WakeUp();
 }
-
 
 void EventLoop::WakeUp() {
     uint64_t val = 1;
@@ -131,7 +129,6 @@ void EventLoop::HandleTimer() {
         printf("\n");
     }
 }
-
 
 void EventLoop::NewConnection(spConnection conn) {
     std::lock_guard<std::mutex> lk(connsMtx);

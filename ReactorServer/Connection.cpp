@@ -36,18 +36,13 @@ void Connection::OnMessage() {
     ssize_t recvN = 0;
     std::string buffer(byteN, 0);
     std::string message;
-    uint32_t len;
     while (true) {
         recvN = recv(Fd(), &buffer[0], buffer.size(), 0);
         if (recvN > 0) {
             inputBuffer_.Append(buffer.data(), recvN);
         } else if (recvN < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
             while (true) {
-                if (inputBuffer_.Size() < sizeof(len)) break;
-                memcpy(&len, inputBuffer_.Data(), sizeof(len));
-                if (inputBuffer_.Size() < len + sizeof(len)) break;
-                message.assign(inputBuffer_.Data()+sizeof(len), len);
-                inputBuffer_.Erase(0, len+sizeof(len));
+                if (inputBuffer_.PickMessage(message) == false) break;
                 printf("recv from fd(%d) [%s]\n", Fd(), message.c_str());
                 lastTime_ = TimeStamp::Now();
 
@@ -84,16 +79,14 @@ void Connection::Send(const char *data, size_t size) {
     }
     std::shared_ptr<std::string> msg(new std::string(data, size));
     if (loop_->InThreadLoop()) {
-        printf("send()在事件循环线程中\n");
         SendInLoop(std::move(msg));
     } else {
-        printf("send()不在事件循环线程中\n");
         loop_->QueueInLoop(std::bind(&Connection::SendInLoop, this, msg));
     }
 }
 
 void Connection::SendInLoop(std::shared_ptr<std::string> msg) {
-    outputBuffer_.AppendWithHead(msg->data(), msg->size());
+    outputBuffer_.AppendWithSep(msg->data(), msg->size());
     clientChannel_.EnableWriting();
 }
 
