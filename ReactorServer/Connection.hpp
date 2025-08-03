@@ -37,6 +37,8 @@ class Connection : public std::enable_shared_from_this<Connection> {
     void SetErrorCallback(std::function<void(spConnection)>);
     void SetOnMessageCallback(std::function<void(spConnection, std::string&)>);
     void SetSendCompleteCallback(std::function<void(spConnection)>);
+
+    bool Timeout(time_t now, int inv);
  private:
     EventLoop *loop_; //Connection对应的事件循环, 在构造函数中传入
     std::unique_ptr<Socket> clientSock_;

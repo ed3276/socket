@@ -11,11 +11,17 @@ EchoServer::EchoServer(const std::string ip, const uint16_t port, size_t subThre
 }
 
 EchoServer::~EchoServer() {
-
+    Stop();
 }
 
 void EchoServer::Start() {
     tcpserver_.Start();
+}
+
+void EchoServer::Stop() {
+    threadpool_.Stop();
+    printf("工作线程池已停止\n");
+    tcpserver_.Stop();
 }
 
 void EchoServer::HandleNewConnection(spConnection conn) {

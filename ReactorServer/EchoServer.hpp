@@ -13,6 +13,7 @@ class EchoServer {
         size_t workThreadNum = 5);
     ~EchoServer();
     void Start();
+    void Stop();
     void HandleNewConnection(spConnection conn);
     void HandleMessage(spConnection conn, std::string &message);
     void HandleClose(spConnection conn);

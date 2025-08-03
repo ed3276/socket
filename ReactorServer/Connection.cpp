@@ -15,7 +15,7 @@ Connection::Connection(EventLoop *loop, std::unique_ptr<Socket> clientSock) :
 }
 
 Connection::~Connection() {
-
+    printf("Connection 已析构。\n");
 }
 
 
@@ -123,4 +123,9 @@ void Connection::SetOnMessageCallback(std::function<void(spConnection, std::stri
 
 void Connection::SetSendCompleteCallback(std::function<void(spConnection)> fn) {
     sendCompleteCallback_ = fn;
+}
+
+
+bool Connection::Timeout(time_t now, int inv) {
+    return now - lastTime_.ToInt() > inv;
 }
