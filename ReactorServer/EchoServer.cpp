@@ -25,7 +25,8 @@ void EchoServer::Stop() {
 }
 
 void EchoServer::HandleNewConnection(spConnection conn) {
-    printf("EchoServer::HandleNewConnection() thread is %ld.\n", syscall(SYS_gettid));
+    //printf("EchoServer::HandleNewConnection() thread is %ld.\n", syscall(SYS_gettid));
+    printf("%s new conn(fd %d %s:%d) ok.\n", TimeStamp::Now().ToString().c_str(), conn->Fd(), conn->Ip().c_str(), conn->Port());
 }
 
 void EchoServer::HandleMessage(spConnection conn, std::string &message) {
@@ -38,7 +39,8 @@ void EchoServer::HandleMessage(spConnection conn, std::string &message) {
 }
 
 void EchoServer::HandleClose(spConnection conn) {
-    printf("EchoServer conn close.\n");
+    printf("%s conn closed(fd %d %s:%d) ok.\n", TimeStamp::Now().ToString().c_str(), conn->Fd(), conn->Ip().c_str(), conn->Port());
+    //printf("EchoServer conn close.\n");
 }
 
 void EchoServer::HandleError(spConnection conn) {
@@ -46,14 +48,15 @@ void EchoServer::HandleError(spConnection conn) {
 }
 
 void EchoServer::HandleSendComplete(spConnection conn) {
-    printf("Message send complete.\n");
+    //printf("Message send complete.\n");
 }
 
 void EchoServer::HandleTimeOut(EventLoop *loop) {
     printf("EchoServer timeout.\n");
 }
 
-void EchoServer::OnMessage(spConnection conn, std::string message) {
+void EchoServer::OnMessage(spConnection conn, std::string &message) {
+    //printf("%s message fd(%d) [%s]\n", TimeStamp::Now().ToString().c_str(), conn->Fd(), message.c_str());
     message = "reply:" + message;
     conn->Send(message.data(), message.size());
 }

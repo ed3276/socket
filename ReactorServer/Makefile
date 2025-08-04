@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -g -std=c++14 -Wall -Wextra -pthread
+CXXFLAGS := -O2 -std=c++14 -Wall -Wextra -pthread
 LDFLAGS := 
 
 SRC_DIR := ./

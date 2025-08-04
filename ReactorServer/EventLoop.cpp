@@ -90,7 +90,7 @@ void EventLoop::WakeUp() {
 }
 
 void EventLoop::HandleWakeUp() {
-    printf("HandleWakeUp() thread id is %ld\n", syscall(SYS_gettid));
+    //printf("HandleWakeUp() thread id is %ld\n", syscall(SYS_gettid));
     uint64_t val = 1;
     read(wakeupFd_, &val, sizeof(val));
 
@@ -114,19 +114,21 @@ void EventLoop::HandleTimer() {
         //printf("主事件循环闹钟时间到了\n");
     } else {
         //printf("从事件循环闹钟时间到了\n");
-        printf("EventLoop::HandleTimer thread is %d, fd", syscall(SYS_gettid));
+        //printf("EventLoop::HandleTimer thread is %d, fd", syscall(SYS_gettid));
         time_t now = time(0);
-        for (auto &c : conns_) {
-            printf(" %d", c.first);
-            if (c.second->Timeout(now, timeout_)) {
+        for (auto it = conns_.begin(); it != conns_.end();) {
+            //printf(" %d", c.first);
+            if (it->second->Timeout(now, timeout_)) {
                 {
+                    timerCallback_(it->first);
                     std::lock_guard<std::mutex> lk(connsMtx);
-                    conns_.erase(c.first);
+                    it = conns_.erase(it);
                 }
-                timerCallback_(c.first);
+            } else {
+                ++it;
             }
         }
-        printf("\n");
+        //printf("\n");
     }
 }
 

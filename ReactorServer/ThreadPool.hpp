@@ -58,7 +58,7 @@ inline ThreadPool::ThreadPool(size_t threads, std::string threadName)
                         task = std::move(this->tasks.front());
                         this->tasks.pop();
                     }
-                    printf("%s(%ld) execute task.\n", name.c_str(), syscall(SYS_gettid)); //显示线程ID
+                    //printf("%s(%ld) execute task.\n", name.c_str(), syscall(SYS_gettid)); //显示线程ID
                     task();
                 }
             }

@@ -21,7 +21,7 @@ class EchoServer {
     void HandleSendComplete(spConnection conn);
     void HandleTimeOut(EventLoop *loop);
 
-    void OnMessage(spConnection conn, std::string message);
+    void OnMessage(spConnection conn, std::string &message);
 
 private:
      TcpServer tcpserver_;

@@ -43,7 +43,7 @@ void Connection::OnMessage() {
         } else if (recvN < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
             while (true) {
                 if (inputBuffer_.PickMessage(message) == false) break;
-                printf("recv from fd(%d) [%s]\n", Fd(), message.c_str());
+                //printf("recv from fd(%d) [%s]\n", Fd(), message.c_str());
                 lastTime_ = TimeStamp::Now();
 
                 onMessageCallback_(shared_from_this(), message);
